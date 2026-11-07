@@ -1,10 +1,12 @@
 package rubrica.dao;
 
-import rubrica.model.Persona;
 import java.util.ArrayList;
+import rubrica.model.Persona;
 
-// Interfaccia DAO per la gestione delle operazioni di persistenza dei dati delle persone nella rubrica
+// Interfaccia per l'accesso ai dati delle persone
 public interface PersonaDAO {
     ArrayList<Persona> caricaPersone();
-    void salvaPersone(ArrayList<Persona> persone);
+    boolean aggiungiPersona(Persona p);
+    boolean aggiornaPersona(Persona p);
+    boolean eliminaPersona(int idPersona);
 }

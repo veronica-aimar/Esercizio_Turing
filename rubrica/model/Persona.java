@@ -1,14 +1,16 @@
 package rubrica.model;
 
-// Classe che rappresenta una persona appartenente alla rubrica, con attributi come nome, cognome, indirizzo, telefono ed età
+// Rappresenta un contatto all'interno della rubrica
 public class Persona {
+    private int id; // Aggiunto per supportare l'identificatore univoco nel database
     private String nome;
     private String cognome;
     private String indirizzo;
     private String telefono;
     private int eta;
 
-    public Persona(String nome, String cognome, String indirizzo, String telefono, int eta) {
+    public Persona(int id, String nome, String cognome, String indirizzo, String telefono, int eta) {
+        this.id = id;
         this.nome = nome;
         this.cognome = cognome;
         this.indirizzo = indirizzo;
@@ -16,7 +18,19 @@ public class Persona {
         this.eta = eta;
     }
 
-    // Getters e Setters
+    // (L'ID viene impostato a 0, sarà il DAO a generare quello vero al momento del salvataggio)
+    public Persona(String nome, String cognome, String indirizzo, String telefono, int eta) {
+        this(0, nome, cognome, indirizzo, telefono, eta);
+    }
+
+    // Metodo utilizzato dai DAO su file per scrivere la riga formattata (separata da punti e virgola)
+    public String formattaPerFile() {
+        return id + ";" + nome + ";" + cognome + ";" + indirizzo + ";" + telefono + ";" + eta;
+    }
+
+    public void setId(int id) { this.id = id; }
+    public int getId() { return id; }
+
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
 
@@ -31,9 +45,4 @@ public class Persona {
 
     public int getEta() { return eta; }
     public void setEta(int eta) { this.eta = eta; }
-
-    
-    public String formattaPerFile() {
-        return nome + ";" + cognome + ";" + indirizzo + ";" + telefono + ";" + eta;
-    }
 }

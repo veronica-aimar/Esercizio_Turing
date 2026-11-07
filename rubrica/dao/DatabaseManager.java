@@ -13,7 +13,7 @@ import java.util.Scanner;
 public class DatabaseManager {
     private static Connection connection = null;
 
-    // Esecuzione automatica dello script schema_database.sql
+    // Esecuzione automatica dello script schema_database.sql solo al primissimo avvio (se il database non esiste)
     public static void inizializzaDatabaseDaScript() {
         Properties props = caricaProprieta();
         if (props == null) return;
@@ -25,21 +25,20 @@ public class DatabaseManager {
 
         String urlBase = "jdbc:mysql://" + ip + ":" + porta + "/?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
 
-        // Caricamento del driver JDBC e connessione al server MySQL per verificare l'esistenza del database rubrica_db
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             try (Connection connBase = DriverManager.getConnection(urlBase, user, pass);
                 Statement stmt = connBase.createStatement()) {
 
-                // Controlla se il database rubrica_db esiste già
+                // Controlla se il database rubrica_db esiste già su MySQL
                 try (var rs = stmt.executeQuery("SHOW DATABASES LIKE 'rubrica_db'")) {
                     if (rs.next()) {
-                        // Il DB esiste già: non serve eseguire nulla
+                        // Il DB esiste già --> non viene eseguito lo script
                         return;
                     }
                 }
 
-                // Se non esiste, legge ed esegue schema_database.sql
+                // Se non esiste, individua il file schema_database.sql
                 File fileSql = new File("schema_database.sql");
                 if (!fileSql.exists()) {
                     try {
@@ -49,19 +48,24 @@ public class DatabaseManager {
                     } catch (Exception ignored) {}
                 }
 
-                try (Scanner scanner = new Scanner(fileSql)) {
-                    scanner.useDelimiter(";");
-                    while (scanner.hasNext()) {
-                        String query = scanner.next().trim();
-                        if (!query.isEmpty() && !query.startsWith("--")) {
-                            try {
-                                stmt.execute(query);
-                            } catch (Exception ex) {
-                                // Ignora eventuali eccezioni su singole istruzioni non bloccanti
+                // Esecuzione di tutte le istruzioni SQL contenute nel file
+                if (fileSql.exists()) {
+                    try (Scanner scanner = new Scanner(fileSql)) {
+                        scanner.useDelimiter(";");
+                        while (scanner.hasNext()) {
+                            String query = scanner.next().trim();
+                            if (!query.isEmpty() && !query.startsWith("--")) {
+                                try {
+                                    stmt.execute(query);
+                                } catch (Exception ex) {
+                                    // Ignora singole istruzioni non bloccanti
+                                }
                             }
                         }
                     }
-                    System.out.println("Primo avvio: Database 'rubrica_db' creato e inizializzato con successo!");
+                    System.out.println("Primo avvio: Database 'rubrica_db' creato e inizializzato con successo da schema_database.sql!");
+                } else {
+                    System.err.println("File 'schema_database.sql' non trovato per la prima inizializzazione.");
                 }
             }
         } catch (Exception e) {

@@ -1,6 +1,7 @@
 package rubrica.view;
 
 import rubrica.model.Persona;
+import rubrica.model.Sessione;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -13,10 +14,10 @@ import java.util.ArrayList;
 public class FinestraPrincipale extends JFrame {
     private JTable tabella;
     private DefaultTableModel modelloTabella;
-    private BottoneModerno btnNuovo, btnModifica, btnElimina;
+    private BottoneModerno btnNuovo, btnModifica, btnElimina, btnLogout;
 
     public FinestraPrincipale() {
-        super("Rubrica Telefonica - Accesso Effettuato");
+        super(impostaTitoloFinestra());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(850, 600);
         setLocationRelativeTo(null);
@@ -28,26 +29,36 @@ public class FinestraPrincipale extends JFrame {
         toolBar.setBackground(new Color(248, 249, 250));
 
         // Creazione dei bottoni con icone personalizzate e colori specificati
-        // Bottone "Nuovo Contatto"
+        // Bottone "Nuovo Contatto" (Verde)
         btnNuovo = new BottoneModerno("Nuovo Contatto", new Color(25, 135, 84), new Color(21, 115, 71));
         btnNuovo.setIcon(Icone.creaIconaPiu(16, Color.WHITE));
         btnNuovo.setIconTextGap(8);
 
-        // Bottone "Modifica Contatto"
+        // Bottone "Modifica Contatto" (Blu)
         btnModifica = new BottoneModerno("Modifica Contatto", new Color(13, 110, 253), new Color(11, 94, 215));
         btnModifica.setIcon(Icone.creaIconaModifica(16, Color.WHITE));
         btnModifica.setIconTextGap(8);
 
-        // Bottone "Elimina Contatto"
+        // Bottone "Elimina Contatto" (Rosso)
         btnElimina = new BottoneModerno("Elimina Contatto", new Color(220, 53, 69), new Color(187, 45, 59));
         btnElimina.setIcon(Icone.creaIconaCestino(16, Color.WHITE));
         btnElimina.setIconTextGap(8);
 
+        // Bottone "Logout" (Grigio scuro neutro)
+        btnLogout = new BottoneModerno("Logout", new Color(108, 117, 125), new Color(90, 98, 104));
+        btnLogout.setIcon(Icone.creaIconaLogout(16, Color.WHITE));
+        btnLogout.setIconTextGap(8);
+
+        // Aggiunta pulsanti a sinistra
         toolBar.add(btnNuovo);
         toolBar.add(Box.createHorizontalStrut(10));
         toolBar.add(btnModifica);
         toolBar.add(Box.createHorizontalStrut(10));
         toolBar.add(btnElimina);
+
+        // Logout tutto a destra
+        toolBar.add(Box.createHorizontalGlue());
+        toolBar.add(btnLogout);
 
         add(toolBar, BorderLayout.NORTH);
 
@@ -102,6 +113,14 @@ public class FinestraPrincipale extends JFrame {
         });
     }
 
+    // Crea dinamicamente il titolo includendo l'eventuale username dell'utente loggato
+    private static String impostaTitoloFinestra() {
+        if (Sessione.getUtenteCorrente() != null) {
+            return "Rubrica Telefonica - Utente: " + Sessione.getUtenteCorrente().getUsername();
+        }
+        return "Rubrica Telefonica - Accesso Effettuato";
+    }
+
     // Metodo per aggiornare la tabella con i dati dei contatti forniti
     public void aggiornaTabella(ArrayList<Persona> contatti) {
         modelloTabella.setRowCount(0);
@@ -115,4 +134,7 @@ public class FinestraPrincipale extends JFrame {
     public JButton getBtnNuovo() { return btnNuovo; }
     public JButton getBtnModifica() { return btnModifica; }
     public JButton getBtnElimina() { return btnElimina; }
+
+    // Getter per il bottone di logout
+    public JButton getBtnLogout() { return btnLogout; }
 }

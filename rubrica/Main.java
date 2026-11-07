@@ -5,14 +5,21 @@ import rubrica.controller.RubricaController;
 import rubrica.dao.DatabaseManager;
 import rubrica.dao.PersonaDAO;
 import rubrica.dao.UtenteDAO;
+import rubrica.dao.impl.PersonaDAOMultiFile;
 import rubrica.dao.impl.PersonaDAOMySQL;
+import rubrica.dao.impl.PersonaDAOSingleFile;
 import rubrica.dao.impl.UtenteDAOMySQL;
 import rubrica.view.FinestraPrincipale;
 import rubrica.view.LoginDialog;
+
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 public class Main {
+    // VARIABILE PER TESTARE LE DIVERSE IMPLEMENTAZIONI:
+    // "MYSQL", "SINGLEFILE" oppure "MULTIFILE"
+    private static final String TIPO_SALVATAGGIO = "MYSQL"; 
+
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -20,19 +27,34 @@ public class Main {
             e.printStackTrace();
         }
 
-        // Inizializzazione automatica del database dallo script
+        // Inizializza il database (serve comunque per il login)
         DatabaseManager.inizializzaDatabaseDaScript();
 
-        // Avvio dell'applicazione in un thread separato per garantire la reattività dell'interfaccia utente
         SwingUtilities.invokeLater(() -> {
-            PersonaDAO personaDAO = new PersonaDAOMySQL();
+            
+            // Scelta dinamica dell'implementazione di PersonaDAO tramite Polimorfismo
+            PersonaDAO personaDAO;
+            switch (TIPO_SALVATAGGIO) {
+                case "SINGLEFILE":
+                    personaDAO = new PersonaDAOSingleFile();
+                    break;
+                case "MULTIFILE":
+                    personaDAO = new PersonaDAOMultiFile();
+                    break;
+                case "MYSQL":
+                default:
+                    personaDAO = new PersonaDAOMySQL();
+                    break;
+            }
+
+            // Il login usa SEMPRE MySQL
             UtenteDAO utenteDAO = new UtenteDAOMySQL();
 
             LoginDialog loginView = new LoginDialog();
 
-            // Definizione di un Runnable che avvia l'applicazione principale dopo il login
             Runnable avviaApp = () -> {
                 FinestraPrincipale vistaPrincipale = new FinestraPrincipale();
+                // Il controller riceve l'implementazione scelta sopra
                 new RubricaController(vistaPrincipale, personaDAO);
                 vistaPrincipale.setVisible(true);
             };
@@ -41,7 +63,6 @@ public class Main {
             loginView.setVisible(true);
         });
 
-        // Garanzia della chiusura pulita della connessione alla chiusura del programma
         Runtime.getRuntime().addShutdownHook(new Thread(DatabaseManager::closeConnection));
     }
 }

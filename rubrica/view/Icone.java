@@ -74,6 +74,30 @@ public class Icone {
         });
     }
 
+    // Crea un'icona di logout con dimensione e colore specificati (porta + freccia d'uscita)
+    public static Icon creaIconaLogout(int dim, Color colore) {
+        return new IconaVettoriale(dim, (g2, w, h) -> {
+            g2.setColor(colore);
+            g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+            // Porta aperta (rettangolo a sinistra aperto sul lato destro)
+            int doorLeft = 2;
+            int doorTop = 2;
+            int doorBottom = h - 3;
+            int doorMidX = w / 2 - 1;
+
+            g2.drawLine(doorMidX, doorTop, doorLeft, doorTop);
+            g2.drawLine(doorLeft, doorTop, doorLeft, doorBottom);
+            g2.drawLine(doorLeft, doorBottom, doorMidX, doorBottom);
+
+            // Freccia verso destra che indica l'uscita
+            int midY = h / 2;
+            g2.drawLine(w / 3, midY, w - 2, midY); // Asta orizzontale
+            g2.drawLine(w - 5, midY - 3, w - 2, midY); // Punta superiore
+            g2.drawLine(w - 5, midY + 3, w - 2, midY); // Punta inferiore
+        });
+    }
+
     // Interfaccia e classe interna per il disegno dinamico
     private interface DisegnatoreIcona {
         void disegna(Graphics2D g2, int width, int height);

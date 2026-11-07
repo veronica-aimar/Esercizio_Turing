@@ -2,7 +2,7 @@
 
 Applicazione desktop per la gestione di una rubrica telefonica sviluppata in **Java (Swing)**, progettata seguendo i pattern architetturali **MVC (Model-View-Controller)** e **DAO (Data Access Object)**, e dotata di un'interfaccia grafica moderna e accessibile.
 
-Il sistema include l'autenticazione multi-utente, il supporto a tre diverse strategie di persistenza (file singolo, file multipli per contatto e database relazionale MySQL con inizializzazione automatica dello schema), validazione dei dati e gestione delle scorciatoie da tastiera.
+Il sistema include l'autenticazione multi-utente con registrazione e logout, l'isolamento dei contatti per utente, il supporto a tre diverse strategie di persistenza (file singolo, file multipli per contatto e database relazionale MySQL con inizializzazione automatica dello schema), validazione dei dati e gestione delle scorciatoie da tastiera.
 
 ---
 
@@ -24,7 +24,7 @@ Il sistema separa le responsabilità con un'articolazione su tre livelli:
                         │ Lettura / Aggiornamento
 ┌───────────────────────▼────────────────────────────────┐
 │                       MODEL                            │
-│  Persona, Utente                                       │
+│  Persona, Utente, Sessione                             │
 └───────────────────────▲────────────────────────────────┘
                         │ Mapping
 ┌───────────────────────▼────────────────────────────────┐
@@ -32,6 +32,7 @@ Il sistema separa le responsabilità con un'articolazione su tre livelli:
 │  PersonaDAO (Interfaccia) ──► SingleFile / Multi / DB  │
 │  UtenteDAO  (Interfaccia) ──► UtenteDAOMySQL           │
 │  DatabaseManager (Connessioni & Init Schema)           │
+│  PasswordHasher (Hash PBKDF2 delle password)           │
 └────────────────────────────────────────────────────────┘
 
 ```
@@ -49,11 +50,11 @@ Il sistema separa le responsabilità con un'articolazione su tre livelli:
 
 Il software supporta tre implementazioni intercambiabili di `PersonaDAO`:
 
-1. **`PersonaDAOSingleFile`:** Salva l'intera rubrica nel file `informazioni.txt`.
+1. **`PersonaDAOSingleFile`:** Salva i contatti di tutti gli utenti nel file `informazioni.txt`, anteponendo a ogni record l'ID dell'utente e caricando solo i contatti dell'utente autenticato.
 
 
-2. **`PersonaDAOMultiFile`:** Salva ogni persona in un file dedicato all'interno della cartella `informazioni/`.
-* *Motivazione:* Soddisfa requisiti di persistenza granulare e partizionata a livello di file system. Le omonimie vengono gestite con suffissi progressivi (`Mario-Rossi.txt`, `Mario-Rossi_1.txt`), evitando sovrascritture accidentali.
+2. **`PersonaDAOMultiFile`:** Salva ogni persona in un file dedicato nella sottocartella dell'utente (`informazioni/utente_<id>/`), con formato `<id>-<nome>-<cognome>.txt`.
+* *Motivazione:* Soddisfa requisiti di persistenza granulare e partizionata a livello di file system. L'ID numerico iniziale identifica il contatto e impedisce sovrascritture anche in presenza di omonimie.
 
 
 3. **`PersonaDAOMySQL`:** Persistenza su database relazionale tramite JDBC.
@@ -61,12 +62,21 @@ Il software supporta tre implementazioni intercambiabili di `PersonaDAO`:
 
 
 
-### 3. Inizializzazione Automatica dello Schema DB (Zero-Configuration)
+### 3. Autenticazione, Registrazione e Isolamento dei Dati
+
+* La finestra iniziale consente di accedere oppure passare alla modalità di registrazione per creare un nuovo account.
+* Le password dei nuovi account non vengono salvate in chiaro: `PasswordHasher` usa PBKDF2 con HMAC-SHA256, salt casuale e confronto a tempo costante.
+* Dopo il login, `Sessione` conserva l'utente corrente. Le query MySQL filtrano i contatti tramite `utente_id`; le strategie su file usano lo stesso ID per separare i dati.
+* La finestra principale mostra l'username autenticato e include il comando **Logout**, che chiude la sessione e riporta alla schermata di autenticazione.
+
+Lo schema inserisce l'utente dimostrativo `admin` con password `admin`. Il verificatore mantiene compatibilità con questo record iniziale in chiaro; gli utenti creati tramite registrazione vengono invece salvati con hash.
+
+### 4. Inizializzazione Automatica dello Schema DB (Zero-Configuration)
 
 * **Scelta:** All'avvio, `DatabaseManager.inizializzaDatabaseDaScript()` si connette all'endpoint generico del server MySQL (`jdbc:mysql://ip:porta/?...`), verifica se `rubrica_db` esiste già e, in caso negativo, esegue in sequenza i comandi DDL/DML contenuti in `schema_database.sql`.
 * **Motivazione:** Elimina l'onere per l'utente di dover aprire MySQL Workbench per lanciare manualmente gli script di creazione del database. Il controllo preliminare `SHOW DATABASES LIKE 'rubrica_db'` previene la reinizializzazione a ogni riavvio, proteggendo i record già inseriti da eventuali istruzioni distruttive (`DROP/TRUNCATE`) e velocizzando il boot dell'app.
 
-### 4. Gestione del Ciclo di Vita delle Connessioni JDBC
+### 5. Gestione del Ciclo di Vita delle Connessioni JDBC
 
 * **Scelta:** Adozione del pattern **Singleton / Connessione Riutilizzata** in `DatabaseManager` combinato con uno **Shutdown Hook** della JVM.
 * **Motivazione:** Aprire e chiudere una connessione socket TCP a ogni singola query genera un collo di bottiglia dovuto all'handshake SSL e all'autenticazione MySQL. Mantenendo la connessione aperta e chiudendo i soli `Statement` e `ResultSet` tramite *try-with-resources*, l'applicazione rimane scattante. Lo Shutdown Hook:
@@ -76,7 +86,7 @@ Runtime.getRuntime().addShutdownHook(new Thread(DatabaseManager::closeConnection
 ```
 garantisce il rilascio formale delle risorse di rete alla chiusura del processo.
 
-### 5. Interfaccia Grafica: Risoluzione Criticità Native di Swing
+### 6. Interfaccia Grafica: Risoluzione Criticità Native di Swing
 
 * **Scelta:** Creazione del componente personalizzato `BottoneModerno` (estensione di `JButton`) con rendering custom via `paintComponent`.
 * **Motivazione:** In un ambiente Windows il Look & Feel di sistema (`WindowsLookAndFeel`) forza rendering nativi che ignorano i colori `setBackground()` o producono testi sbiaditi con scarso contrasto. `BottoneModerno` risolve il problema alla radice con:
@@ -86,7 +96,7 @@ garantisce il rilascio formale delle risorse di rete alla chiusura del processo.
 
 
 
-### 6. Iconografia Vettoriale via Codice (Java2D)
+### 7. Iconografia Vettoriale via Codice (Java2D)
 
 * **Scelta:** Implementazione della classe `Icone` che disegna programmaticamente le icone vettoriali (`+`, matita, cestino, disco/spunta, `X`) tramite primitive `Graphics2D`.
 * **Motivazione:** Le icone in Java2D sono:
@@ -96,12 +106,12 @@ garantisce il rilascio formale delle risorse di rete alla chiusura del processo.
 
 
 
-### 7. Ergonomia e Disposizione delle Barre degli Strumenti
+### 8. Ergonomia e Disposizione delle Barre degli Strumenti
 
 * **Finestra Principale:** La `JToolBar` è posizionata in alto (`BorderLayout.NORTH`).
 * **Finestra di Dialogo (Editor Persona):** I bottoni di azione (*Salva*, *Annulla*) sono collocati in basso a destra (`BorderLayout.SOUTH`). Nei form modali l'occhio dell'utente esegue una scansione verticale dall'alto in basso; posizionare le conferme a fine modulo evita errori di input.
 
-### 8. Scorciatoie da Tastiera (Key Bindings)
+### 9. Scorciatoie da Tastiera (Key Bindings)
 
 * **Scelta:** Integrazione dei tasti di scelta rapida tramite `getRootPane().setDefaultButton()` e la combinazione `InputMap` / `ActionMap` a livello di `WHEN_IN_FOCUSED_WINDOW`.
 * **Comportamenti mappati:**
@@ -112,7 +122,7 @@ garantisce il rilascio formale delle risorse di rete alla chiusura del processo.
 
 * **Motivazione:** Consente l'utilizzo a utenti avanzati senza dover ricorrere all'uso del mouse.
 
-### 9. Strategia di Validazione e Integrità dei Dati
+### 10. Strategia di Validazione e Integrità dei Dati
 
 La logica è incapsulata nella classe statica `ValidatorePersona`:
 
@@ -126,12 +136,12 @@ La logica è incapsulata nella classe statica `ValidatorePersona`:
 
 * **Numeri Telefonici Duplicati:** Il sistema non impone un blocco distruttivo ma notifica un avviso con richiesta di conferma, consentendo la condivisione di un numero tra colleghi di lavoro o conviventi.
 
-### 10. Gestione File System: Sanificazione e Omonimie
+### 11. Gestione File System: Sanificazione e Omonimie
 
 Nella persistenza multi-file (`PersonaDAOMultiFile`):
 
 * **Sanificazione nomi file:** I sistemi operativi (in particolare Windows) vietano caratteri speciali (`\ / : * ? " < > |`) e nomi riservati (`CON`, `PRN`, `NUL`). Il metodo `sanificaNomeFile` normalizza le stringhe e rimuove spazi o punti finali.
-* **Risoluzione Omonimie:** Due contatti con lo stesso nome e cognome causerebbero la sovrascrittura dello stesso file `Nome-Cognome.txt`. Il DAO indicizza le collisioni generando suffissi progressivi (`Mario-Rossi.txt`, `Mario-Rossi_1.txt`), preservando l'integrità dell'archivio.
+* **Risoluzione Omonimie:** Il nome del file include l'ID del contatto (`12-Mario-Rossi.txt`), quindi due contatti con lo stesso nome e cognome restano distinti senza sovrascritture.
 
 ---
 
@@ -162,7 +172,10 @@ rubrica-project/
 │   │   └── UtenteDAO.java
 │   ├── model/
 │   │   ├── Persona.java
+│   │   ├── Sessione.java
 │   │   └── Utente.java
+│   ├── util/
+│   │   └── PasswordHasher.java
 │   ├── view/
 │   │   ├── BottoneModerno.java
 │   │   ├── EditorPersonaDialog.java
@@ -210,8 +223,7 @@ presenti nel repository tramite i rispettivi file README.
 
 ### Avvio con Docker
 
-Docker avvia MySQL con `docker compose up -d` e monta automaticamente
-`schema_database.sql` al primo avvio del container. L’applicazione Java deve comunque leggere `credenziali_database.properties`: Docker non configura automaticamente questo file.
+Docker avvia MySQL con `docker compose up -d` e monta automaticamente `schema_database.sql` al primo avvio del container. L’applicazione Java deve comunque leggere `credenziali_database.properties`: Docker non configura automaticamente questo file.
 
 Con il `docker-compose.yml` incluso nel progetto, i valori da usare sono:
 
@@ -240,8 +252,9 @@ Oppure fare doppio click sul file `Rubrica.jar` generato con lo script di build.
 All'avvio, l'applicazione:
 
 1. Rileva automaticamente la presenza del database e delle tabelle, inizializzandoli se necessario;
-2. Presenta la finestra di login. È possibile accedere con le credenziali predefinite presenti nello schema (`admin` / `admin`);
-3. Apre la gestione contatti completa.
+2. Presenta la finestra di autenticazione. È possibile accedere con le credenziali dimostrative presenti nello schema (`admin` / `admin`) oppure registrare un nuovo account;
+3. Crea la sessione dell'utente autenticato e apre la gestione dei suoi contatti;
+4. Con Logout chiude la sessione e consente di accedere con un altro account.
 
 
 ### Creazione del file JAR
@@ -276,8 +289,7 @@ Per avviare l'applicazione con doppio click, mantenere nella stessa cartella di 
 * `schema_database.sql`;
 * la cartella `informazioni/`, se si utilizza la persistenza su file.
 
-È inoltre necessario avere Java installato e associato ai file `.jar` in
-Windows.
+È inoltre necessario avere Java installato e associato ai file `.jar` in Windows.
 
 Per eseguirlo dal terminale:
 

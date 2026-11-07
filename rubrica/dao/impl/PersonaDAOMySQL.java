@@ -3,57 +3,129 @@ package rubrica.dao.impl;
 import rubrica.dao.DatabaseManager;
 import rubrica.dao.PersonaDAO;
 import rubrica.model.Persona;
+import rubrica.model.Sessione;
+
 import java.sql.*;
 import java.util.ArrayList;
 
-// Implementazione dell'interfaccia PersonaDAO per la gestione delle operazioni di persistenza dei dati delle persone nella rubrica utilizzando un database MySQL
 public class PersonaDAOMySQL implements PersonaDAO {
-    // Carica tutte le persone dal database e le restituisce come un vettore di oggetti Persona
+
+    // Carica tutte le persone associate all'utente corrente
     @Override
     public ArrayList<Persona> caricaPersone() {
-        ArrayList<Persona> lista = new ArrayList<>();
-        String query = "SELECT * FROM persone";
-        try (Connection conn = DatabaseManager.getConnection();
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(query)) {
-            
-            // Itera attraverso il ResultSet e crea oggetti Persona per ogni riga del risultato
-            while (rs.next()) {
-                lista.add(new Persona(
-                    rs.getString("nome"),
-                    rs.getString("cognome"),
-                    rs.getString("indirizzo"),
-                    rs.getString("telefono"),
-                    rs.getInt("eta")
-                ));
+        ArrayList<Persona> contatti = new ArrayList<>();
+        Connection conn = DatabaseManager.getConnection();
+        if (conn == null) {
+            return contatti;
+        }
+
+        int utenteId = Sessione.getIdUtenteCorrente();
+        // Includiamo l'id nel SELECT
+        String query = "SELECT id, nome, cognome, indirizzo, telefono, eta FROM persone WHERE utente_id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, utenteId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Persona p = new Persona(
+                        rs.getInt("id"),
+                        rs.getString("nome"),
+                        rs.getString("cognome"),
+                        rs.getString("indirizzo"),
+                        rs.getString("telefono"),
+                        rs.getInt("eta")
+                    );
+                    contatti.add(p);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return lista;
+
+        return contatti;
     }
 
-    // Salva tutte le persone nel database, svuotando prima la tabella e poi inserendo i nuovi dati
+    // Inserisce la persona nel database e assegna l'ID auto-generato all'oggetto Persona
     @Override
-    public void salvaPersone(ArrayList<Persona> persone) {
-        // Per rispettare l'interfaccia che riceve l'intera lista, svuotamento e reinserimento
-        try (Connection conn = DatabaseManager.getConnection()) {
-            conn.createStatement().executeUpdate("TRUNCATE TABLE persone"); // Svuota la tabella
-            
-            String insert = "INSERT INTO persone (nome, cognome, indirizzo, telefono, eta) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(insert)) {
-                for (Persona p : persone) {
-                    ps.setString(1, p.getNome());
-                    ps.setString(2, p.getCognome());
-                    ps.setString(3, p.getIndirizzo());
-                    ps.setString(4, p.getTelefono());
-                    ps.setInt(5, p.getEta());
-                    ps.addBatch();
+    public boolean aggiungiPersona(Persona p) {
+        Connection conn = DatabaseManager.getConnection();
+        if (conn == null) {
+            return false;
+        }
+
+        int utenteId = Sessione.getIdUtenteCorrente();
+        String query = "INSERT INTO persone (utente_id, nome, cognome, indirizzo, telefono, eta) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, utenteId);
+            ps.setString(2, p.getNome());
+            ps.setString(3, p.getCognome());
+            ps.setString(4, p.getIndirizzo());
+            ps.setString(5, p.getTelefono());
+            ps.setInt(6, p.getEta());
+
+            int righeInserite = ps.executeUpdate();
+            if (righeInserite > 0) {
+                // Recupera l'ID auto-generato dal database e lo assegna all'oggetto
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        p.setId(generatedKeys.getInt(1));
+                    }
                 }
-                ps.executeBatch();
+                return true;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return false;
+    }
+
+    // Aggiorna il contatto se l'utente lo modifica nella GUI
+    @Override
+    public boolean aggiornaPersona(Persona p) {
+        Connection conn = DatabaseManager.getConnection();
+        if (conn == null) {
+            return false;
+        }
+
+        int utenteId = Sessione.getIdUtenteCorrente();
+        String query = "UPDATE persone SET nome = ?, cognome = ?, indirizzo = ?, telefono = ?, eta = ? WHERE id = ? AND utente_id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, p.getNome());
+            ps.setString(2, p.getCognome());
+            ps.setString(3, p.getIndirizzo());
+            ps.setString(4, p.getTelefono());
+            ps.setInt(5, p.getEta());
+            ps.setInt(6, p.getId());
+            ps.setInt(7, utenteId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Elimina solo il contatto rimosso
+    @Override
+    public boolean eliminaPersona(int idPersona) {
+        Connection conn = DatabaseManager.getConnection();
+        if (conn == null) {
+            return false;
+        }
+
+        int utenteId = Sessione.getIdUtenteCorrente();
+        String query = "DELETE FROM persone WHERE id = ? AND utente_id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, idPersona);
+            ps.setInt(2, utenteId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
