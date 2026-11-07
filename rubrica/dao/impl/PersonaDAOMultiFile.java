@@ -5,7 +5,7 @@ import rubrica.model.Persona;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Scanner;
-import java.util.Vector;
+import java.util.ArrayList;
 
 // Implementazione di PersonaDAO che salva ogni persona in un file separato nella cartella "informazioni"
 public class PersonaDAOMultiFile implements PersonaDAO {
@@ -13,8 +13,8 @@ public class PersonaDAOMultiFile implements PersonaDAO {
 
     // Carica tutte le persone dai file nella cartella "informazioni"
     @Override
-    public Vector<Persona> caricaPersone() {
-        Vector<Persona> lista = new Vector<>();
+    public ArrayList<Persona> caricaPersone() {
+        ArrayList<Persona> lista = new ArrayList<>();
         File dir = new File(CARTELLA);
         if (!dir.exists() || !dir.isDirectory()) return lista;
 
@@ -44,7 +44,7 @@ public class PersonaDAOMultiFile implements PersonaDAO {
 
     // Salva tutte le persone nei file nella cartella "informazioni"
     @Override
-    public void salvaPersone(Vector<Persona> persone) {
+    public void salvaPersone(ArrayList<Persona> persone) {
         File dir = new File(CARTELLA);
         if (!dir.exists()) dir.mkdir();
 

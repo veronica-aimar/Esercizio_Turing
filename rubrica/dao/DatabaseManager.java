@@ -2,9 +2,6 @@ package rubrica.dao;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

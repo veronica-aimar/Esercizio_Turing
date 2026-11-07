@@ -7,7 +7,7 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.Vector;
+import java.util.ArrayList;
 
 // Classe principale della GUI dell'applicazione Rubrica, estende JFrame e gestisce l'interfaccia utente principale
 public class FinestraPrincipale extends JFrame {
@@ -103,7 +103,7 @@ public class FinestraPrincipale extends JFrame {
     }
 
     // Metodo per aggiornare la tabella con i dati dei contatti forniti
-    public void aggiornaTabella(Vector<Persona> contatti) {
+    public void aggiornaTabella(ArrayList<Persona> contatti) {
         modelloTabella.setRowCount(0);
         for (Persona p : contatti) {
             modelloTabella.addRow(new Object[]{p.getNome(), p.getCognome(), p.getTelefono()});

@@ -5,7 +5,7 @@ import rubrica.model.Persona;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Scanner;
-import java.util.Vector;
+import java.util.ArrayList;
 
 // Implementazione di PersonaDAO che salva tutte le persone in un unico file "informazioni.txt"
 public class PersonaDAOSingleFile implements PersonaDAO {
@@ -13,8 +13,8 @@ public class PersonaDAOSingleFile implements PersonaDAO {
 
     // Caricamento di tutte le persone dal file "informazioni.txt" e restituzione come un vettore di oggetti Persona
     @Override
-    public Vector<Persona> caricaPersone() {
-        Vector<Persona> lista = new Vector<>();
+    public ArrayList<Persona> caricaPersone() {
+        ArrayList<Persona> lista = new ArrayList<>();
         File file = new File(NOME_FILE);
         if (!file.exists()) return lista;
 
@@ -37,7 +37,7 @@ public class PersonaDAOSingleFile implements PersonaDAO {
 
     // Salvataggio di tutte le persone nel file "informazioni.txt", sovrascrivendo il contenuto esistente
     @Override
-    public void salvaPersone(Vector<Persona> persone) {
+    public void salvaPersone(ArrayList<Persona> persone) {
         try (PrintStream ps = new PrintStream(new File(NOME_FILE))) {
             for (Persona p : persone) {
                 ps.println(p.formattaPerFile());

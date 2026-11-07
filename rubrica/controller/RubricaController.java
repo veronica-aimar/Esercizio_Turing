@@ -5,13 +5,13 @@ import rubrica.model.Persona;
 import rubrica.view.EditorPersonaDialog;
 import rubrica.view.FinestraPrincipale;
 import javax.swing.*;
-import java.util.Vector;
+import java.util.ArrayList;
 
 // Controller per la gestione della logica dell'applicazione Rubrica, interagendo tra la vista (FinestraPrincipale) e il modello (PersonaDAO)
 public class RubricaController {
     private FinestraPrincipale view;
     private PersonaDAO dao;
-    private Vector<Persona> contatti;
+    private ArrayList<Persona> contatti;
 
     // Costruttore del controller della rubrica
     public RubricaController(FinestraPrincipale view, PersonaDAO dao) {

@@ -4,14 +4,14 @@ import rubrica.dao.DatabaseManager;
 import rubrica.dao.PersonaDAO;
 import rubrica.model.Persona;
 import java.sql.*;
-import java.util.Vector;
+import java.util.ArrayList;
 
 // Implementazione dell'interfaccia PersonaDAO per la gestione delle operazioni di persistenza dei dati delle persone nella rubrica utilizzando un database MySQL
 public class PersonaDAOMySQL implements PersonaDAO {
     // Carica tutte le persone dal database e le restituisce come un vettore di oggetti Persona
     @Override
-    public Vector<Persona> caricaPersone() {
-        Vector<Persona> lista = new Vector<>();
+    public ArrayList<Persona> caricaPersone() {
+        ArrayList<Persona> lista = new ArrayList<>();
         String query = "SELECT * FROM persone";
         try (Connection conn = DatabaseManager.getConnection();
             Statement stmt = conn.createStatement();
@@ -35,7 +35,7 @@ public class PersonaDAOMySQL implements PersonaDAO {
 
     // Salva tutte le persone nel database, svuotando prima la tabella e poi inserendo i nuovi dati
     @Override
-    public void salvaPersone(Vector<Persona> persone) {
+    public void salvaPersone(ArrayList<Persona> persone) {
         // Per rispettare l'interfaccia che riceve l'intera lista, svuotamento e reinserimento
         try (Connection conn = DatabaseManager.getConnection()) {
             conn.createStatement().executeUpdate("TRUNCATE TABLE persone"); // Svuota la tabella
