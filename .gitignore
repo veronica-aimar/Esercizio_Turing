@@ -5,5 +5,4 @@ bin
 lib/*.jar
 informazioni.txt
 informazioni/*.txt
-Requisiti.txt
 *.pdf

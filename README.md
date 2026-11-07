@@ -259,14 +259,10 @@ un artefatto generato e non deve essere aggiunto a GitHub.
 In alternativa, aprire un terminale PowerShell nella cartella principale del progetto ed eseguire:
 
 ```powershell
-$sorgenti = Get-ChildItem -Path rubrica -Recurse -Filter *.java |
-    ForEach-Object FullName
-
-Remove-Item -Recurse -Force bin -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force bin | Out-Null
+New-Item -ItemType Directory -Force bin
+$sorgenti = Get-ChildItem -Path rubrica -Recurse -Filter *.java | ForEach-Object FullName
 javac -cp "lib\*" -d bin $sorgenti
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
-& "$env:JAVA_HOME\bin\jar.exe" cfm Rubrica.jar manifest.mf -C bin .
+java -cp "bin;lib\*" rubrica.Main
 ```
 
 Il comando richiede un JDK installato, perché utilizza `javac` e `jar.exe`.
