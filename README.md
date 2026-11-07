@@ -142,31 +142,39 @@ Nella persistenza multi-file (`PersonaDAOMultiFile`):
 * Model: Entità `Persona` e `Utente`;
 
 ```text
-rubrica/
-├── controller/
-│   ├── LoginController.java
-│   ├── RubricaController.java
-│   └── ValidatorePersona.java
-├── dao/
-│   ├── DatabaseManager.java
-│   ├── PersonaDAO.java
-│   ├── UtenteDAO.java
-│   └── impl/
-│       ├── PersonaDAOMultiFile.java
-│       ├── PersonaDAOMySQL.java
-│       ├── PersonaDAOSingleFile.java
-│       └── UtenteDAOMySQL.java
-├── model/
-│   ├── Persona.java
-│   └── Utente.java
-├── view/
-│   ├── BottoneModerno.java
-│   ├── EditorPersonaDialog.java
-│   ├── FinestraPrincipale.java
-│   ├── Icone.java
-│   └── LoginDialog.java
-└── Main.java
-
+rubrica-project/
+├── bin/
+├── informazioni/
+├── lib/
+├── rubrica/
+│   ├── controller/
+│   │   ├── LoginController.java
+│   │   ├── RubricaController.java
+│   │   └── ValidatorePersona.java
+│   ├── dao/
+│   │   ├── impl/
+│   │   │   ├── PersonaDAOMultiFile.java
+│   │   │   ├── PersonaDAOMySQL.java
+│   │   │   ├── PersonaDAOSingleFile.java
+│   │   │   └── UtenteDAOMySQL.java
+│   │   ├── DatabaseManager.java
+│   │   ├── PersonaDAO.java
+│   │   └── UtenteDAO.java
+│   ├── model/
+│   │   ├── Persona.java
+│   │   └── Utente.java
+│   ├── view/
+│   │   ├── BottoneModerno.java
+│   │   ├── EditorPersonaDialog.java
+│   │   ├── FinestraPrincipale.java
+│   │   ├── Icone.java
+│   │   └── LoginDialog.java
+│   └── Main.java
+├── credenziali_database.properties
+├── docker-compose.yml
+├── manifest.mf
+├── Rubrica.jar
+└── schema_database.sql
 ```
 
 ---
