@@ -1,0 +1,18 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Rubrica.jar",
+            "type": "shell",
+            "command": "$javaHome = $env:JAVA_HOME; if (-not $javaHome) { $javaHome = 'C:\\Program Files\\Java\\jdk-21' }; if (-not (Test-Path \"$javaHome\\bin\\jar.exe\")) { throw \"jar.exe non trovato in $javaHome\\bin\" }; Remove-Item -Recurse -Force bin -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force bin | Out-Null; $sorgenti = Get-ChildItem -Path rubrica -Recurse -Filter *.java | ForEach-Object FullName; javac -cp \"lib\\*\" -d bin $sorgenti; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$javaHome\\bin\\jar.exe\" cfm Rubrica.jar manifest.mf -C bin .",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": "$javac",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+# Copiare questo file in credenziali_database.properties e inserire i propri valori.
+ip-server-mysql=localhost
+porta=3307
+username=root
+password=root

@@ -1,4 +1,5 @@
 *.properties
+Rubrica.jar
 bin
 *.class
 lib/*.jar
