@@ -1,0 +1,7 @@
+*.properties
+bin
+*.class
+lib/*.jar
+informazioni.txt
+informazioni/*.txt
+Requisiti.txt
